@@ -25,6 +25,8 @@ Helix Remix has following features:
 - Fainal Fantasy 14 Mode(Exsample about locking the current key layer by pressing the function key).<br><br>
 ![FF14 Mode](readme_sub/ff14.jpg)
 
+In FF14 mode, if you press the target key once, it will return to the previous key layer. To lock FF14 key layer, press the FF14 mode key twice quickly.
+
 "tools" folder contains the tools for Helix Remix. Those tools requires Python3 develop environment.
 - **hex2hsv.py** : Changes the name and HTML color code to a C define statement, described in the CSV.
 - **img2hex.py** : Optimized bitmap files to OLED binary image text.
