@@ -14,6 +14,9 @@ This program is published for learning to develop your own firmware. However, I 
 
 ## :memo: Technical note
 
+A built firmware is including in "build" folder. Write this hex file by [QML Toolbox](https://qmk.fm/toolbox/) and you can use all the features without any programming.
+
+
 Helix Remix has following features:
 - Full scratched code for the latest QMK APIs.
 - Change the color of any key by LED layer API [[Technical article](https://www.tnksoft.com/blog/?p=8285)].
