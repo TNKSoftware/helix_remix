@@ -1,3 +1,5 @@
+(日本語による解説は[ＴＮＫソフトウェア](https://www.tnksoft.com/soft/iot/hemix/)のサイトにて公開しています)
+
 # Helix Remix
 Customized QMK Firmware for Helix keyboard
 
