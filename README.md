@@ -18,7 +18,7 @@ This program is published for learning to develop your own firmware. However, I 
 
 A built firmware is including in "build" folder. Write this hex file by [QML Toolbox](https://qmk.fm/toolbox/) and you can use all the features without any programming.
 
-This is an example of introducing the QMK development environment and building the source code on MSYS2 for Windows 64bit.
+This is an example of installing the QMK development environment and building the source code on MSYS2 for Windows 64bit.
 ```
 pacman --needed --noconfirm --disable-download-timeout -S git mingw-w64-x86_64-toolchain mingw-w64-x86_64-python3-pip
 python -m pip install qmk
