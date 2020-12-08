@@ -18,6 +18,15 @@ This program is published for learning to develop your own firmware. However, I 
 
 A built firmware is including in "build" folder. Write this hex file by [QML Toolbox](https://qmk.fm/toolbox/) and you can use all the features without any programming.
 
+This is an example of introducing the QMK development environment and building the source code on MSYS2 for Windows 64bit.
+```
+pacman --needed --noconfirm --disable-download-timeout -S git mingw-w64-x86_64-toolchain mingw-w64-x86_64-python3-pip
+python -m pip install qmk
+qmk setup
+
+cd qmk_firmware
+qmk compile -kb helix_remix -km default
+```
 
 Helix Remix has following features:
 - Full scratched code for the latest QMK APIs.
@@ -33,7 +42,7 @@ In FF14 mode, if you press the target key once, it will return to the previous k
 - **hex2hsv.py** : Changes the name and HTML color code to a C define statement, described in the CSV.
 - **img2hex.py** : Optimized bitmap files to OLED binary image text.
 
-To enable split keyboard synchronization, you need to rewrite the core of QMK. Copy the files under the "qmk_transport" folder to QMK's core program codes.
+To enable split keyboard synchronization, you need to rewrite the core of QMK. Copy the files under the "qmk_transport" folder to "qmk_firmware/quantum/split_common" folder.
 
 If you don't need synchronization, please remove the compile option "OPT_DEFS += -DHREMIX_DATA_ENABLE".
 
