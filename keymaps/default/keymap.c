@@ -90,15 +90,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     KC_ESC,  KC_1,    KC_2,    KC_3,    KC_4,   KC_5,                   KC_6,   KC_7,   KC_8,    KC_9,    KC_0,    KC_MINS, \
     JP_ZHTG, KC_Q,    KC_W,    KC_E,    KC_R,   KC_T,                   KC_Y,   KC_U,   KC_I,    KC_O,    KC_P,    KC_BSPC,   \
     KC_TAB,  KC_A,    KC_S,    KC_D,    KC_F,   KC_G,                   KC_H,   KC_J,   KC_K,    KC_L,    KC_SCLN, KC_ENT, \
-    KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,   KC_B,   KC_ENT, KC_DEL, KC_N,   KC_M,   KC_COMM, KC_DOT,  KC_UP,   KC_RSFT,  \
-    KC_LCTL, KC_LALT, KC_LGUI, TD_FF14, ML_UPP, ML_LOW, KC_SPC, KC_SPC, ML_LOW, ML_UPP, TD_FF14, KC_LEFT, KC_DOWN, KC_RGHT  \
+    KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,   KC_B,   KC_DEL, KC_DEL, KC_N,   KC_M,   KC_COMM, KC_DOT,  KC_UP,   KC_RSFT,  \
+    KC_LCTL, KC_LALT, KC_LGUI, TD_FF14, ML_UPP, ML_LOW, KC_SPC, KC_SPC, ML_LOW, ML_UPP, KC_PSCR, KC_LEFT, KC_DOWN, KC_RGHT  \
     ),
 
   [_LOWER] = KEY_LAYOUT( \
     S(KC_SCLN), KC_MINS,   S(JP_COLN), KC_SLSH,    S(KC_5),    S(KC_MINS),                   JP_CIRC,    JP_YEN,     KC_PEQL, KC_PSLS,  KC_PAST, KC_PMNS, \
     S(JP_YEN),  S(KC_6),   S(KC_1),    S(KC_SLSH), JP_AT,      JP_YEN,                       JP_AT,      JP_LBRC,    KC_P7,   KC_P8,    KC_P9,   KC_BSPC,  \
     S(KC_8),    S(KC_9),   JP_LBRC,    JP_RBRC,    S(JP_LBRC), S(JP_RBRC),                   JP_COLN,    JP_RBRC,    KC_P4,   KC_P5,    KC_P6,   KC_PENT, \
-    S(KC_COMM), S(KC_DOT), S(JP_BSLS), JP_CIRC,    S(JP_AT),   S(JP_CIRC), _______, _______, KC_SLSH,    JP_BSLS,    KC_P1,   KC_P2,    KC_P3,   KC_RSFT, \
+    S(KC_COMM), S(KC_DOT), S(JP_BSLS), JP_CIRC,    S(JP_AT),   S(JP_CIRC), KC_ENT,  KC_BSPC, KC_SLSH,    JP_BSLS,    KC_P1,   KC_P2,    KC_P3,   KC_RALT, \
     _______,    _______,   _______,    XXXXXXX,    XXXXXXX,    XXXXXXX,    _______, _______, S(KC_SLSH), S(JP_BSLS), KC_P0,   KC_COMMA, KC_PDOT, KC_PPLS \
     ),
 
@@ -107,7 +107,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     S(KC_CAPS), KC_NLCK, KC_CALC, KC_MYCM, KC_MAIL, KC_WHOM,                   _______, _______, KC_NLCK, KC_PSCR, KC_SLCK, KC_PAUSE, \
     KC_VOLD,    KC_VOLU, KC_MUTE, KC_MPLY, KC_MPRV, KC_MNXT,                   _______, _______, _______, KC_INS,  KC_HOME, KC_PGUP,  \
     _______,    _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, KC_DEL,  KC_END,  KC_PGDN,  \
-    _______,    MAC_WIN, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______ \
+    _______,    _______, MAC_WIN, RGB_TOG, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______ \
     ),
 
   [_FF14] =  KEY_LAYOUT( \
@@ -145,7 +145,7 @@ const rgblight_segment_t PROGMEM led_base_layer[] = RGBLIGHT_LAYER_SEGMENTS(
     {38, 1, HSV_KEY_FUNC},
     {44, 1, HSV_KEY_FUNC},
     {50, 1, HSV_KEY_FUNC}, { 51, 1, HSV_KEY_ARROW }, { 56, 1, HSV_KEY_FUNC },
-    {57, 3, HSV_KEY_ARROW}, { 60, 3, HSV_KEY_LAYER_FF14 },
+    {57, 3, HSV_KEY_ARROW}, { 60, 1, HSV_KEY_FUNC },
       {61, 1, HSV_KEY_LAYER_HIGH}, {62, 1, HSV_KEY_LAYER_LOW},
       {63, 1, HSV_KEY_SPACE }
 );
@@ -209,6 +209,7 @@ typedef union {
   uint32_t raw;
   struct {
     bool swap_alt_gui:1;
+    bool enable_led:1;
   };
 } user_config_t;
 user_config_t user_config;
@@ -273,7 +274,7 @@ void keyboard_post_init_user(void) {
     swap_alt_gui(user_config.swap_alt_gui);
 
 #ifdef RGBLIGHT_ENABLE
-    init_rgblight();
+    init_rgblight(user_config.enable_led);
 #endif
 
 #ifdef RGBLIGHT_LAYERS
@@ -316,6 +317,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     case MAC_WIN:
         if (record->event.pressed) swap_alt_gui(!user_config.swap_alt_gui);
         oled_update(false);
+        break;
+    case RGB_TOG:
+        user_config.enable_led = !rgblight_is_enabled();
+        eeconfig_update_user(user_config.raw);
         break;
     }
     return true;
@@ -411,7 +416,10 @@ void oled_task_user(void) {
         last_state = current_state;
     }
 
-    if(require_oled_update == false) return;
+    if(require_oled_update == false){
+        return;
+    }
+
     require_oled_update = false;
 
     if(is_keyboard_master()){

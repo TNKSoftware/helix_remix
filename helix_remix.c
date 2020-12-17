@@ -4,8 +4,12 @@
 #ifdef RGBLIGHT_ENABLE
 // 引数が無い関数でもvoidを記述しないとエラー
 // (function declaration isn't a prototype)になる
-void init_rgblight(void) {
-    rgblight_enable_noeeprom();
+void init_rgblight(bool enable) {
+    if(enable){
+        rgblight_enable_noeeprom();
+    }else{
+        rgblight_disable_noeeprom();
+    }
 
 #if defined(RGBLIGHT_MODE_RGB_TEST)
     // RGBテストモードで点灯する

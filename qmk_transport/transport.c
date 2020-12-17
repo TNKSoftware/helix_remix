@@ -21,14 +21,119 @@ static pin_t encoders_pad[] = ENCODERS_PAD_A;
 #    define NUMBER_OF_ENCODERS (sizeof(encoders_pad) / sizeof(pin_t))
 #endif
 
-#    include "serial.h"
-
 #ifdef HREMIX_DATA_ENABLE
 uint8_t volatile status_hremix_val = 0;
 static uint8_t hremix_val = 0;
 uint8_t get_hremix_value(void) { return hremix_val; }
 void set_hremix_value(uint8_t v) { hremix_val = v; }
 #endif
+
+#if defined(USE_I2C)
+
+#    include "i2c_master.h"
+#    include "i2c_slave.h"
+
+typedef struct _I2C_slave_buffer_t {
+    matrix_row_t smatrix[ROWS_PER_HAND];
+    uint8_t      backlight_level;
+#    if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_SPLIT)
+    rgblight_syncinfo_t rgblight_sync;
+#    endif
+#    ifdef ENCODER_ENABLE
+    uint8_t encoder_state[NUMBER_OF_ENCODERS];
+#    endif
+#    ifdef WPM_ENABLE
+    uint8_t current_wpm;
+#    endif
+} I2C_slave_buffer_t;
+
+static I2C_slave_buffer_t *const i2c_buffer = (I2C_slave_buffer_t *)i2c_slave_reg;
+
+#    define I2C_BACKLIGHT_START offsetof(I2C_slave_buffer_t, backlight_level)
+#    define I2C_RGB_START offsetof(I2C_slave_buffer_t, rgblight_sync)
+#    define I2C_KEYMAP_START offsetof(I2C_slave_buffer_t, smatrix)
+#    define I2C_ENCODER_START offsetof(I2C_slave_buffer_t, encoder_state)
+#    define I2C_WPM_START offsetof(I2C_slave_buffer_t, current_wpm)
+
+#    define TIMEOUT 100
+
+#    ifndef SLAVE_I2C_ADDRESS
+#        define SLAVE_I2C_ADDRESS 0x32
+#    endif
+
+// Get rows from other half over i2c
+bool transport_master(matrix_row_t matrix[]) {
+    i2c_readReg(SLAVE_I2C_ADDRESS, I2C_KEYMAP_START, (void *)matrix, sizeof(i2c_buffer->smatrix), TIMEOUT);
+
+    // write backlight info
+#    ifdef BACKLIGHT_ENABLE
+    uint8_t level = is_backlight_enabled() ? get_backlight_level() : 0;
+    if (level != i2c_buffer->backlight_level) {
+        if (i2c_writeReg(SLAVE_I2C_ADDRESS, I2C_BACKLIGHT_START, (void *)&level, sizeof(level), TIMEOUT) >= 0) {
+            i2c_buffer->backlight_level = level;
+        }
+    }
+#    endif
+
+#    if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_SPLIT)
+    if (rgblight_get_change_flags()) {
+        rgblight_syncinfo_t rgblight_sync;
+        rgblight_get_syncinfo(&rgblight_sync);
+        if (i2c_writeReg(SLAVE_I2C_ADDRESS, I2C_RGB_START, (void *)&rgblight_sync, sizeof(rgblight_sync), TIMEOUT) >= 0) {
+            rgblight_clear_change_flags();
+        }
+    }
+#    endif
+
+#    ifdef ENCODER_ENABLE
+    i2c_readReg(SLAVE_I2C_ADDRESS, I2C_ENCODER_START, (void *)i2c_buffer->encoder_state, sizeof(i2c_buffer->encoder_state), TIMEOUT);
+    encoder_update_raw(i2c_buffer->encoder_state);
+#    endif
+
+#    ifdef WPM_ENABLE
+    uint8_t current_wpm = get_current_wpm();
+    if (current_wpm != i2c_buffer->current_wpm) {
+        if (i2c_writeReg(SLAVE_I2C_ADDRESS, I2C_WPM_START, (void *)&current_wpm, sizeof(current_wpm), TIMEOUT) >= 0) {
+            i2c_buffer->current_wpm = current_wpm;
+        }
+    }
+#    endif
+    return true;
+}
+
+void transport_slave(matrix_row_t matrix[]) {
+    // Copy matrix to I2C buffer
+    memcpy((void *)i2c_buffer->smatrix, (void *)matrix, sizeof(i2c_buffer->smatrix));
+
+// Read Backlight Info
+#    ifdef BACKLIGHT_ENABLE
+    backlight_set(i2c_buffer->backlight_level);
+#    endif
+
+#    if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_SPLIT)
+    // Update the RGB with the new data
+    if (i2c_buffer->rgblight_sync.status.change_flags != 0) {
+        rgblight_update_sync(&i2c_buffer->rgblight_sync, false);
+        i2c_buffer->rgblight_sync.status.change_flags = 0;
+    }
+#    endif
+
+#    ifdef ENCODER_ENABLE
+    encoder_state_raw(i2c_buffer->encoder_state);
+#    endif
+
+#    ifdef WPM_ENABLE
+    set_current_wpm(i2c_buffer->current_wpm);
+#    endif
+}
+
+void transport_master_init(void) { i2c_init(); }
+
+void transport_slave_init(void) { i2c_slave_init(SLAVE_I2C_ADDRESS); }
+
+#else  // USE_SERIAL
+
+#    include "serial.h"
 
 typedef struct _Serial_s2m_buffer_t {
     // TODO: if MATRIX_COLS > 8 change to uint8_t packed_matrix[] for pack/unpack
@@ -75,7 +180,9 @@ enum serial_transaction_id {
 #    if defined(RGBLIGHT_ENABLE) && defined(RGBLIGHT_SPLIT)
     PUT_RGBLIGHT,
 #    endif
-    SEND_MASTER_DATA
+#    if defined(HREMIX_DATA_ENABLE)
+    SEND_MASTER_DATA,
+#    endif
 };
 
 SSTD_t transactions[] = {
@@ -93,10 +200,12 @@ SSTD_t transactions[] = {
             (uint8_t *)&status_rgblight, sizeof(serial_rgblight), (uint8_t *)&serial_rgblight, 0, NULL  // no slave to master transfer
         },
 #    endif
+#    if defined(HREMIX_DATA_ENABLE)
     [SEND_MASTER_DATA] =
         {
             (uint8_t *)&status_hremix_val, sizeof(uint8_t), (uint8_t*)&hremix_val, 0, NULL,
         }
+#    endif
 };
 
 void transport_master_init(void) { soft_serial_initiator_init(transactions, TID_LIMIT(transactions)); }
@@ -128,7 +237,6 @@ void transport_rgblight_slave(void) {
 #        define transport_rgblight_slave()
 #    endif
 
-
 bool transport_master(matrix_row_t matrix[]) {
 #    ifndef SERIAL_USE_MULTI_TRANSACTION
     if (soft_serial_transaction() != TRANSACTION_END) {
@@ -137,9 +245,11 @@ bool transport_master(matrix_row_t matrix[]) {
 #    else
     transport_rgblight_master();
 
+#    if defined(HREMIX_DATA_ENABLE)    
     if (soft_serial_transaction(SEND_MASTER_DATA) != TRANSACTION_END) {
         return false;
     }
+#    endif
 
     if (soft_serial_transaction(GET_SLAVE_MATRIX) != TRANSACTION_END) {
         return false;
@@ -164,7 +274,6 @@ bool transport_master(matrix_row_t matrix[]) {
     // Write wpm to slave
     serial_m2s_buffer.current_wpm = get_current_wpm();
 #    endif
-
     return true;
 }
 
@@ -187,3 +296,4 @@ void transport_slave(matrix_row_t matrix[]) {
 #    endif
 }
 
+#endif
