@@ -30,9 +30,9 @@ qmk compile -kb helix_remix -km default
 
 Helix Remix has following features:
 - Full scratched code for the latest QMK APIs.
-- Change the color of any key by LED layer API [[Technical article](https://www.tnksoft.com/blog/?p=8285)].
-- Show any bitmap to OLED display [[Technical article](https://www.tnksoft.com/blog/?p=8291)].
-- Data synchronization for a split keyboard [[Technical article](https://www.tnksoft.com/blog/?p=8309)].
+- Change the color of any key by LED layer API.
+- Show any bitmap to OLED display.
+- Data synchronization for a split keyboard.
 - Fainal Fantasy 14 Mode(Exsample about locking the current key layer by pressing the function key).<br><br>
 ![FF14 Mode](readme_sub/ff14.jpg)
 
@@ -45,6 +45,8 @@ In FF14 mode, if you press the target key once, it will return to the previous k
 To enable split keyboard synchronization, you need to rewrite the core of QMK. Copy the files under the "qmk_transport" folder to "qmk_firmware/quantum/split_common" folder.
 
 If you don't need synchronization, please remove the compile option "OPT_DEFS += -DHREMIX_DATA_ENABLE".
+
+For more information, please visit [my site](https://www.tnksoft.com/reading/hardware/keyboard/).
 
 ## :yen: Donate, please!
 [![Donate For Free Project](https://www.tnksoft.com/donate/donate.svg "Donate For Free Project")](https://www.tnksoft.com/donate/)
