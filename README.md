@@ -18,13 +18,8 @@ This program is published for learning to develop your own firmware. However, I 
 
 A built firmware is including in "build" folder. Write this hex file by [QML Toolbox](https://qmk.fm/toolbox/) and you can use all the features without any programming.
 
-This is an example of installing the QMK development environment and building the source code on MSYS2 for Windows 64bit.
+I use <a href="https://msys.qmk.fm/">QMK MSYS</a>, an integrated tool, to compile the firmware. Once you launch QMK MSYS, set up the development tool with the "qmk setup" command to begin with, and after you are done, run the following command to compile.
 ```
-pacman --needed --noconfirm --disable-download-timeout -S git mingw-w64-x86_64-toolchain mingw-w64-x86_64-python3-pip
-python -m pip install qmk
-qmk setup
-
-cd qmk_firmware
 qmk compile -kb helix_remix -km default
 ```
 
@@ -33,18 +28,11 @@ Helix Remix has following features:
 - Change the color of any key by LED layer API.
 - Show any bitmap to OLED display.
 - Data synchronization for a split keyboard.
-- Fainal Fantasy 14 Mode(Exsample about locking the current key layer by pressing the function key).<br><br>
-![FF14 Mode](readme_sub/ff14.jpg)
+- Example of using the right keyboard as a one-handed keyboard (Clip Studio mode).<br><br>
 
-In FF14 mode, if you press the target key once, it will return to the previous key layer. To lock FF14 key layer, press the FF14 mode key twice quickly.
-
-"tools" folder contains the tools for Helix Remix. Those tools requires Python3 develop environment.
+"tools" folder contains the tools for Helix Remix. Those tools requires Python3.
 - **hex2hsv.py** : Changes the name and HTML color code to a C define statement, described in the CSV.
 - **img2hex.py** : Optimized bitmap files to OLED binary image text.
-
-To enable split keyboard synchronization, you need to rewrite the core of QMK. Copy the files under the "qmk_transport" folder to "qmk_firmware/quantum/split_common" folder.
-
-If you don't need synchronization, please remove the compile option "OPT_DEFS += -DHREMIX_DATA_ENABLE".
 
 For more information, please visit [my site](https://www.tnksoft.com/reading/hardware/keyboard/).
 
