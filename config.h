@@ -15,6 +15,8 @@
 #define USE_SERIAL
 #define SOFT_SERIAL_PIN D2
 
+#define SPLIT_TRANSACTION_IDS_USER USER_DATA_SYNC
+
 /* 左側がメインボード */
 #define MASTER_LEFT
 /* D1ピンの通電状況で左右を判断 */
@@ -89,7 +91,7 @@
   25, 26, 27, 28, 29, 30, 31,    63, 62, 61, 60, 59, 58, 57)
 #endif
 
-#ifdef OLED_DRIVER_ENABLE
+#ifdef OLED_ENABLE
 /* OLEDの画面をスリープにする間隔(ms) */
 #define OLED_TIMEOUT 5000
 

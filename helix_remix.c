@@ -4,12 +4,8 @@
 #ifdef RGBLIGHT_ENABLE
 // 引数が無い関数でもvoidを記述しないとエラー
 // (function declaration isn't a prototype)になる
-void init_rgblight(bool enable) {
-    if(enable){
-        rgblight_enable_noeeprom();
-    }else{
-        rgblight_disable_noeeprom();
-    }
+void init_rgblight(void) {
+    rgblight_enable_noeeprom();
 
 #if defined(RGBLIGHT_MODE_RGB_TEST)
     // RGBテストモードで点灯する
@@ -23,7 +19,7 @@ void init_rgblight(bool enable) {
 }
 #endif
 
-#ifdef OLED_DRIVER_ENABLE
+#ifdef OLED_ENABLE
 extern uint8_t oled_buffer[OLED_MATRIX_SIZE];
 extern OLED_BLOCK_TYPE oled_dirty;  // 0xFFFFですべての領域を更新できる
 
@@ -102,3 +98,9 @@ void draw_bitmap(
     }
 }
 #endif
+
+__attribute__((weak))
+void suspend_power_down_user(void)
+{
+    oled_off();
+}

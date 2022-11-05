@@ -7,10 +7,10 @@
 #define HSV_EX1 140, 255, 150
 #define HSV_EX2 7, 255, 150
 
-void init_rgblight(bool enable);
+void init_rgblight(void);
 #endif
 
-#ifdef OLED_DRIVER_ENABLE
+#ifdef OLED_ENABLE
 typedef enum _bmp_rotate{
     BmpRotateNone,
     BmpRotate90,
